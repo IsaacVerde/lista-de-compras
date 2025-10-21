@@ -145,9 +145,9 @@ app.post('/update/:id', async (req, res) => { // 1. Adiciona 'async'
   // 2. (MUDANÇA CRÍTICA) Postgres usa $1 em vez de ?
   if (action === 'increase') {
     sql = "UPDATE itens SET quantidade = quantidade + 1 WHERE id = $1";
-  } else if (action === 'decrease') {
-    sql = "UPDATE itens SET quantidade = MAX(1, quantidade - 1) WHERE id = $1";
-  } else {
+} else if (action === 'decrease') {
+    sql = "UPDATE itens SET quantidade = GREATEST(1, quantidade - 1) WHERE id = $1";
+  } else {
     return res.redirect('/');
   }
 
@@ -203,4 +203,5 @@ app.post('/delete/:id', async (req, res) => { // 1. Adiciona 'async'
 // 5. INICIAR O SERVIDOR (Sem mudança)
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
+
 });
