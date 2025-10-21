@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minha Lista</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <div class="container">
+    
+    <div class="header-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M5.757 1.071a.5.5 0 0 1 .172.686L3.383 6h9.234L10.07 1.757a.5.5 0 1 1 .858-.514L13.783 6H15.5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-.623l-1.844 6.456a.75.75 0 0 1-.722.544H3.69a.75.75 0 0 1-.722-.544L1.123 8H.5a.5.5 0 0 1-.5-.5v-1A.5.5 0 0 1 .5 6h1.717L5.07 1.243a.5.5 0 0 1 .686-.172zM2.163 8l1.714 6H12.12l1.714-6H2.163z"/>
+      </svg>
+    </div>
+
+    <h1>Minha Lista</h1>
+    <p>Organize suas compras de forma simples</p>
+
+    <section class="form-container">
+      <form action="/add" method="POST" class="form-add-item">
+        <div class="form-group form-group-nome">
+          <input type="text" id="nome" name="nome" placeholder="Digite o nome do item..." required>
+        </div>
+        
+        <div class="form-group form-group-categoria">
+          <select id="categoria" name="categoria" required>
+            <option value="" disabled selected>Escolha a categoria</option>
+            <% listaDeCategorias.forEach(cat => { %>
+              <option value="<%= cat %>"><%= cat %></option>
+            <% }); %>
+          </select>
+        </div>
+
+        <input type="hidden" name="quantidade" value="1">
+        
+        <button type="submit" class="btn btn-primary">+ Adicionar</button>
+      </form>
+    </section>
+
+    <section class="columns-container">
+
+      <div class="column">
+        <div class="stat-card">
+          <span class="stat-number"><%= countPendentes %></span>
+          <span class="stat-label">Itens pendentes</span>
+        </div>
+
+        <section class="list-container">
+          <% if (itensPendentes.length === 0) { %>
+            <p class="empty-list">Nenhum item pendente. Adicione acima!</p>
+          <% } else { %>
+            <ul class="item-list">
+              <% itensPendentes.forEach(item => { %>
+                <li class="item item-pendente">
+                  
+                  <form action="/toggle/<%= item.id %>" method="POST" class="form-toggle">
+                    <button type="submit" class="btn-toggle"></button>
+                  </form>
+
+                  <div class="item-info">
+                    <span class="item-name"><%= item.nome %></span>
+                    <span class="pill <%= item.colorClass %>"><%= item.categoria %></span>
+                  </div>
+
+                  <div class="item-actions">
+                    <form action="/update/<%= item.id %>?action=decrease" method="POST">
+                      <button type="submit" class="btn btn-secondary btn-qty">-</button>
+                    </form>
+                    <span class="item-qtd"><%= item.quantidade %></span>
+                    <form action="/update/<%= item.id %>?action=increase" method="POST">
+                      <button type="submit" class="btn btn-secondary btn-qty">+</button>
+                    </form>
+                  </div>
+
+                  <form action="/delete/<%= item.id %>" method="POST" class="form-delete">
+                    <button type="submit" class="btn btn-danger">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                      </svg>
+                    </button>
+                  </form>
+                </li>
+              <% }); %>
+            </ul>
+          <% } %>
+        </section>
+      </div>
+
+      <div class="column">
+        <div class="stat-card">
+          <span class="stat-number"><%= countComprados %></span>
+          <span class="stat-label">Itens comprados</span>
+        </div>
+
+        <section class="list-container">
+          <h2>COMPRADOS</h2>
+          <% if (itensComprados.length === 0) { %>
+            <p class="empty-list">Nenhum item comprado ainda.</p>
+          <% } else { %>
+            <ul class="item-list">
+              <% itensComprados.forEach(item => { %>
+                <li class="item item-comprado">
+                  
+                  <form action="/toggle/<%= item.id %>" method="POST" class="form-toggle">
+                    <button type="submit" class="btn-toggle btn-toggled">✓</button>
+                  </form>
+
+                  <div class="item-info">
+                    <span class="item-name"><%= item.nome %></span>
+                    <span class="pill <%= item.colorClass %>"><%= item.categoria %></span>
+                  </div>
+                  
+                  <div class="item-actions">
+                    <span class="item-qtd">Qtd: <%= item.quantidade %></span>
+                  </div>
+
+                  <form action="/delete/<%= item.id %>" method="POST" class="form-delete">
+                    <button type="submit" class="btn btn-danger">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                      </svg>
+                    </button>
+                  </form>
+                </li>
+              <% }); %>
+            </ul>
+          <% } %>
+        </section>
+      </div>
+
+    </section> </div>
+</body>
+</html>

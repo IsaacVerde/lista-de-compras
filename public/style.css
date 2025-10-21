@@ -1,0 +1,281 @@
+/* Importação de Fontes do Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Open+Sans:wght@400;600;700&display=swap');
+
+:root {
+  /* Cores */
+  --bg-color: #f7f6f3;
+  --container-bg: #ffffff;
+  --text-dark: #333333;
+  --text-light: #666666;
+  --text-comprado: #aaa;
+  --primary: #5cb85c; /* Verde */
+  --primary-hover: #4CAF50;
+  --danger: #d9534f;
+  --border: #e0e0e0;
+  --shadow: rgba(0, 0, 0, 0.05);
+
+  /* (MUDANÇA 1) Nova textura de fundo */
+  --bg-texture-url: url('https://www.transparenttextures.com/patterns/gplay.png');
+
+  /* Fontes */
+  --font-heading: 'Merriweather', serif; /* Era Poppins */
+  --font-body: 'Open Sans', sans-serif;  /* Era Quicksand */
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-color);
+  background-image: var(--bg-texture-url); /* TEXTURA APLICADA */
+  color: var(--text-dark);
+  margin: 0;
+  padding: 30px 20px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* (MUDANÇA 2) ESTILO DO ÍCONE */
+.header-icon {
+  text-align: center;
+  margin-bottom: 10px;
+}
+.header-icon svg {
+  width: 40px;
+  height: 40px;
+  color: var(--primary); /* Cor verde */
+}
+
+h1 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 2.2em;
+  text-align: center;
+  margin-bottom: 5px;
+}
+h1 + p {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.95em;
+  margin-bottom: 30px;
+}
+h2 {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 0.9em;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.empty-list {
+  color: var(--text-light);
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+/* Formulário de Adição */
+.form-container {
+  background-color: var(--container-bg);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px var(--shadow);
+  margin-bottom: 30px;
+}
+.form-add-item {
+  display: flex;
+  gap: 10px;
+}
+.form-group { flex: 1; }
+.form-group-nome { flex-grow: 2.5; }
+.form-group-categoria { flex-grow: 1.5; }
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 1em;
+  box-sizing: border-box; /* Importante */
+}
+.form-group select {
+  appearance: none; /* Remove seta padrão */
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666666%22%20d%3D%2M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-13%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2013l128%20127.9c3.6%203.6%207.8%205.4%2013%205.4s9.4-1.8%2013-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-13%200-5-1.9-9.2-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E');
+  background-repeat: no-repeat;
+  background-position: right 12px top 50%;
+  background-size: 10px auto;
+}
+
+/* Botões */
+.btn { border: none; cursor: pointer; border-radius: 8px; font-family: var(--font-heading); font-weight: 500; }
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+  padding: 12px 20px;
+  font-size: 0.9em;
+  transition: background-color 0.2s ease;
+}
+.btn-primary:hover { background-color: var(--primary-hover); }
+
+/* ESTILOS DAS COLUNAS */
+.columns-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Duas colunas de tamanho igual */
+  gap: 30px; /* Espaço entre as colunas */
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Espaço entre o card e a lista dentro da coluna */
+}
+
+/* Stat Cards */
+.stat-card {
+  background-color: var(--container-bg);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px var(--shadow);
+  text-align: center;
+}
+.stat-number {
+  font-size: 2em;
+  font-weight: 700;
+  color: var(--primary);
+  display: block;
+}
+.stat-label {
+  font-size: 0.9em;
+  color: var(--text-light);
+}
+
+/* Lista de Itens */
+.list-container {
+}
+.item-list { list-style: none; padding: 0; }
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--container-bg);
+  padding: 15px 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px var(--shadow);
+  margin-bottom: 10px;
+}
+.item-info { flex-grow: 1; }
+
+.item-name { 
+  font-weight: 500; 
+  font-size: 1.1em;
+  display: block; /* Força quebra de linha */
+}
+
+.item-actions { display: flex; align-items: center; gap: 8px; }
+.item-qtd { font-weight: 500; min-width: 20px; text-align: center; }
+
+/* Forms dentro dos itens */
+.form-toggle, .form-delete, .item-actions form {
+  margin: 0; padding: 0;
+}
+
+/* Botão Toggle (Checkbox) */
+.btn-toggle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+.btn-toggle:hover { border-color: var(--primary); }
+.btn-toggle.btn-toggled {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+/* Botão de Quantidade */
+.btn-qty {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 1.2em;
+  line-height: 1;
+  background-color: #f0f0f0;
+  color: var(--text-light);
+  border: 1px solid var(--border);
+}
+
+/* Estilo do Botão Deletar (para o SVG) */
+.btn-danger {
+  background: none;
+  color: var(--text-light);
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-danger svg { /* Estiliza o SVG da lixeira */
+  width: 16px;
+  height: 16px;
+}
+.btn-danger:hover { 
+  color: var(--danger); 
+}
+
+/* Itens Comprados */
+.item-comprado .item-name {
+  text-decoration: line-through;
+  color: var(--text-comprado);
+}
+.item-comprado .pill {
+  opacity: 0.6;
+}
+
+/* Pills de Categoria (CORES) */
+.pill {
+  font-size: 0.75em;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+  display: inline-block;
+  margin-top: 4px;
+  color: #fff;
+}
+.cat-frutas { background-color: #f39c12; }
+.cat-verduras { background-color: #27ae60; }
+.cat-laticinios { background-color: #3498db; }
+.cat-carnes { background-color: #c0392b; }
+.cat-peixes { background-color: #16a085; }
+.cat-padaria { background-color: #d35400; }
+.cat-congelados { background-color: #34495e; }
+.cat-mercearia { background-color: #8e44ad; }
+.cat-bebidas { background-color: #2980b9; }
+.cat-limpeza { background-color: #1abc9c; }
+.cat-higiene { background-color: #9b59b6; }
+.cat-outros { background-color: #7f8c8d; }
+
+
+/* RESPONSIVIDADE */
+@media (max-width: 768px) {
+  .container {
+    max-width: 100%; /* Ocupa largura total em telas menores */
+  }
+
+  .columns-container {
+    grid-template-columns: 1fr; /* Volta para coluna única */
+    gap: 40px; /* Espaço entre a seção de pendentes e comprados */
+  }
+
+  .form-add-item {
+    flex-direction: column; /* Empilha o formulário */
+    align-items: stretch;
+  }
+}
