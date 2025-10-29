@@ -1,4 +1,4 @@
-// 1. IMPORTAÇÕES E CONFIGURAÇÃO (igual)
+// 1. IMPORTAÇÕES E CONFIGURAÇÃO
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -8,10 +8,11 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const bcrypt = require('bcrypt');
+const flash = require('connect-flash'); // <-- PACOTE NOVO
 const saltRounds = 10;
 
 const app = express();
-app.enable('trust proxy'); // <- ESSENCIAL PARA O GOOGLE/VERCEL
+app.enable('trust proxy');
 const port = 3000;
 
 app.set('view engine', 'ejs');
@@ -19,7 +20,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 // ------------------------------------------------------------------
-//           CONFIGURAÇÃO DE SESSÃO E PASSPORT (igual)
+//           CONFIGURAÇÃO DE SESSÃO E PASSPORT
 // ------------------------------------------------------------------
 
 app.use(session({
@@ -28,11 +29,13 @@ app.use(session({
   saveUninitialized: false
 }));
 
+app.use(flash()); // <-- USA O connect-flash
+
 app.use(passport.initialize());
 app.use(passport.session());
 
 // ------------------------------------------------------------------
-//           CONFIGURAÇÃO DO BANCO DE DADOS (igual)
+//           CONFIGURAÇÃO DO BANCO DE DADOS
 // ------------------------------------------------------------------
 
 const db = new Pool({
@@ -44,7 +47,7 @@ const db = new Pool({
 
 console.log('Conectado ao Vercel Postgres.');
 
-// 3. CRIAÇÃO DAS TABELAS (igual)
+// 3. CRIAÇÃO DAS TABELAS (Verifica ao iniciar)
 const criarTabelas = async () => {
   try {
     await db.query(`
@@ -74,12 +77,8 @@ const criarTabelas = async () => {
 criarTabelas();
 
 // ------------------------------------------------------------------
-//           LÓGICA DO PASSPORT (Estratégias) (igual)
+//           LÓGICA DO PASSPORT (Estratégias)
 // ------------------------------------------------------------------
-
-// (Cole aqui toda a sua lógica do passport.use(LocalStrategy), passport.use(GoogleStrategy), serializeUser, deserializeUser)
-// ...
-// (É exatamente igual ao arquivo anterior, não muda nada)
 
 passport.use(new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
   try {
@@ -97,7 +96,7 @@ passport.use(new LocalStrategy({ usernameField: 'email' }, async (email, passwor
       if (isMatch) {
         return done(null, user);
       } else {
-        return done(null, false, { message: 'Senha incorreta.' });
+        return done(null, false, { message: 'Email ou senha incorretos.' }); // Mensagem genérica
       }
     });
   } catch (err) {
@@ -147,28 +146,25 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-
 // ------------------------------------------------------------------
-//           ROTAS DE AUTENTICAÇÃO (igual)
+//           ROTAS DE AUTENTICAÇÃO (Atualizadas)
 // ------------------------------------------------------------------
 
-// (Cole aqui todas as suas rotas GET /login, POST /login, GET /register, POST /register, GET /logout, GET /auth/google, GET /auth/google/callback)
-// ...
-// (É exatamente igual ao arquivo anterior, não muda nada)
+// A rota GET /login foi REMOVIDA.
 
-app.get('/login', (req, res) => {
-  res.render('login.ejs');
-});
+// A página de registo continua separada (é mais limpo)
 app.get('/register', (req, res) => {
   res.render('register.ejs');
 });
+
 app.post('/register', async (req, res) => {
   const { email, password } = req.body;
   try {
     const checkResult = await db.query("SELECT * FROM users WHERE email = $1", [email]);
     if (checkResult.rows.length > 0) {
-      return res.redirect('/register');
+      return res.redirect('/register'); // Idealmente com flash message
     }
+    
     bcrypt.hash(password, saltRounds, async (err, hash) => {
       if (err) throw err;
       const result = await db.query(
@@ -176,7 +172,7 @@ app.post('/register', async (req, res) => {
         [email, hash]
       );
       const user = result.rows[0];
-      req.login(user, (err) => {
+      req.login(user, (err) => { // Faz o login automático após o registo
         if (err) return next(err);
         res.redirect('/');
       });
@@ -186,32 +182,39 @@ app.post('/register', async (req, res) => {
     res.redirect('/register');
   }
 });
+
+// POST /login agora redireciona para '/' em caso de falha
 app.post('/login', passport.authenticate('local', {
   successRedirect: '/',
-  failureRedirect: '/login'
+  failureRedirect: '/', // <-- Redireciona para a home
+  failureFlash: true    // <-- Ativa a mensagem de erro
 }));
+
+// GET /logout agora redireciona para '/'
 app.get('/logout', (req, res, next) => {
   req.logout((err) => {
     if (err) { return next(err); }
-    res.redirect('/login');
+    res.redirect('/');
   });
 });
+
+// Rotas do Google
 app.get('/auth/google',
   passport.authenticate('google', { scope: ['profile', 'email'] })
 );
+
 app.get('/auth/google/callback', 
   passport.authenticate('google', {
     successRedirect: '/',
-    failureRedirect: '/login'
+    failureRedirect: '/' // <-- Redireciona para a home
   })
 );
 
-
 // ------------------------------------------------------------------
-//           ROTAS DO APP (COM NOVAS CATEGORIAS)
+//           ROTAS DO APP
 // ------------------------------------------------------------------
 
-// (NOVO) Objeto de Categorias e Subcategorias
+// Objeto de Categorias e Subcategorias
 const categorias = {
   "Hortifruti": ["Frutas", "Verduras", "Legumes"],
   "Carnes e Peixes": ["Carne Bovina", "Aves", "Carne Suína", "Peixes", "Frutos do Mar"],
@@ -226,72 +229,27 @@ const categorias = {
   "Outros": ["Outros"]
 };
 
-// (NOVO) Mapeamento de cores (a CHAVE é a subcategoria exata)
+// Mapeamento de cores
 const categoriasCores = {
-  // Hortifruti
-  "Frutas": "cat-frutas",
-  "Verduras": "cat-verduras",
-  "Legumes": "cat-verduras",
-  // Carnes
-  "Carne Bovina": "cat-carnes",
-  "Aves": "cat-carnes",
-  "Carne Suína": "cat-carnes",
-  "Peixes": "cat-peixes",
-  "Frutos do Mar": "cat-peixes",
-  // Laticínios
-  "Leite": "cat-laticinios",
-  "Queijos": "cat-laticinios",
-  "Iogurtes": "cat-laticinios",
-  "Manteiga": "cat-laticinios",
-  "Presunto": "cat-laticinios",
-  "Ovos": "cat-laticinios",
-  // Padaria
-  "Pães": "cat-padaria",
-  "Bolos": "cat-padaria",
-  "Biscoitos": "cat-padaria",
-  // Mercearia
-  "Arroz": "cat-mercearia",
-  "Feijão": "cat-mercearia",
-  "Massas": "cat-mercearia",
-  "Óleos": "cat-mercearia",
-  "Temperos": "cat-mercearia",
-  "Molhos": "cat-mercearia",
-  "Enlatados": "cat-mercearia",
-  // Congelados
-  "Pratos Prontos": "cat-congelados",
-  "Salgados": "cat-congelados",
-  "Polpas de Fruta": "cat-congelados",
-  "Sorvetes": "cat-congelados",
-  // Bebidas
-  "Água": "cat-bebidas",
-  "Sucos": "cat-bebidas",
-  "Refrigerantes": "cat-bebidas",
-  "Cervejas": "cat-bebidas",
-  "Vinhos": "cat-bebidas",
-  // Limpeza
-  "Sabão em Pó": "cat-limpeza",
-  "Detergente": "cat-limpeza",
-  "Desinfetante": "cat-limpeza",
-  "Água Sanitária": "cat-limpeza",
-  // Higiene
-  "Shampoo": "cat-higiene",
-  "Condicionador": "cat-higiene",
-  "Sabonete": "cat-higiene",
-  "Papel Higiênico": "cat-higiene",
-  // Utilitários
-  "Papel Toalha": "cat-utilitarios",
-  "Filtro de Café": "cat-utilitarios",
-  "Sacos de Lixo": "cat-utilitarios",
-  // Outros
+  "Frutas": "cat-frutas", "Verduras": "cat-verduras", "Legumes": "cat-verduras",
+  "Carne Bovina": "cat-carnes", "Aves": "cat-carnes", "Carne Suína": "cat-carnes", "Peixes": "cat-peixes", "Frutos do Mar": "cat-peixes",
+  "Leite": "cat-laticinios", "Queijos": "cat-laticinios", "Iogurtes": "cat-laticinios", "Manteiga": "cat-laticinios", "Presunto": "cat-laticinios", "Ovos": "cat-laticinios",
+  "Pães": "cat-padaria", "Bolos": "cat-padaria", "Biscoitos": "cat-padaria",
+  "Arroz": "cat-mercearia", "Feijão": "cat-mercearia", "Massas": "cat-mercearia", "Óleos": "cat-mercearia", "Temperos": "cat-mercearia", "Molhos": "cat-mercearia", "Enlatados": "cat-mercearia",
+  "Pratos Prontos": "cat-congelados", "Salgados": "cat-congelados", "Polpas de Fruta": "cat-congelados", "Sorvetes": "cat-congelados",
+  "Água": "cat-bebidas", "Sucos": "cat-bebidas", "Refrigerantes": "cat-bebidas", "Cervejas": "cat-bebidas", "Vinhos": "cat-bebidas",
+  "Sabão em Pó": "cat-limpeza", "Detergente": "cat-limpeza", "Desinfetante": "cat-limpeza", "Água Sanitária": "cat-limpeza",
+  "Shampoo": "cat-higiene", "Condicionador": "cat-higiene", "Sabonete": "cat-higiene", "Papel Higiênico": "cat-higiene",
+  "Papel Toalha": "cat-utilitarios", "Filtro de Café": "cat-utilitarios", "Sacos de Lixo": "cat-utilitarios",
   "Outros": "cat-outros"
 };
 
-// (NOVO) Função de helper atualizada
+// Função de helper de cor
 function getCategoryClass(categoria) {
   return categoriasCores[categoria] || 'cat-outros';
 }
 
-// (NOVO) Helper para validar a categoria
+// Helper para validar a categoria
 function isCategoriaValida(categoriaRecebida) {
   for (const grupo in categorias) {
     if (categorias[grupo].includes(categoriaRecebida)) {
@@ -301,57 +259,70 @@ function isCategoriaValida(categoriaRecebida) {
   return false;
 }
 
-// Middleware de proteção (igual)
+// Middleware de proteção para ações (POST, UPDATE, DELETE)
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
   }
-  res.redirect('/login');
+  res.redirect('/'); // Se não estiver logado, volta para a home
 }
 
 /**
  * ROTA READ (GET /)
- * (Atualizada para enviar o novo objeto de categorias)
+ * (Agora é pública e decide o que mostrar)
  */
-app.get('/', ensureAuthenticated, async (req, res) => {
-  const userId = req.user.id;
-  const sql = "SELECT * FROM itens WHERE user_id = $1 ORDER BY comprado, categoria, nome";
+app.get('/', async (req, res) => {
+  let itensPendentes = [];
+  let itensComprados = [];
+  let countPendentes = 0;
+  let countComprados = 0;
   
-  try {
-    const result = await db.query(sql, [userId]);
-    const rows = result.rows;
+  // Só procura itens SE o utilizador estiver logado
+  if (req.isAuthenticated()) {
+    const userId = req.user.id;
+    const sql = "SELECT * FROM itens WHERE user_id = $1 ORDER BY comprado, categoria, nome";
+    
+    try {
+      const result = await db.query(sql, [userId]);
+      const rows = result.rows;
 
-    const pendentes = rows.filter(item => item.comprado === 0);
-    const comprados = rows.filter(item => item.comprado === 1);
+      const pendentes = rows.filter(item => item.comprado === 0);
+      const comprados = rows.filter(item => item.comprado === 1);
 
-    pendentes.forEach(item => item.colorClass = getCategoryClass(item.categoria));
-    comprados.forEach(item => item.colorClass = getCategoryClass(item.categoria));
+      pendentes.forEach(item => item.colorClass = getCategoryClass(item.categoria));
+      comprados.forEach(item => item.colorClass = getCategoryClass(item.categoria));
 
-    res.render('index.ejs', { 
-      user: req.user,
-      itensPendentes: pendentes,
-      itensComprados: comprados,
-      countPendentes: pendentes.length,
-      countComprados: comprados.length,
-      listaDeCategorias: categorias // (MUDANÇA) Enviando o novo objeto
-    });
+      itensPendentes = pendentes;
+      itensComprados = comprados;
+      countPendentes = pendentes.length;
+      countComprados = comprados.length;
 
-  } catch (err) {
-    console.error(err.message);
-    return res.status(500).send("Erro ao consultar o banco de dados.");
+    } catch (err) {
+      console.error(err.message);
+      return res.status(500).send("Erro ao consultar o banco de dados.");
+    }
   }
+
+  // Renderiza a página para TODOS
+  res.render('index.ejs', { 
+    user: req.user, // Estará 'undefined' se não estiver logado
+    itensPendentes: itensPendentes,
+    itensComprados: itensComprados,
+    countPendentes: countPendentes,
+    countComprados: countComprados,
+    listaDeCategorias: categorias,
+    loginError: req.flash('error') // Passa a mensagem de erro do login
+  });
 });
 
 /**
- * ROTA CREATE (POST /add)
- * (Atualizada para validar a nova categoria)
+ * ROTAS DE AÇÃO (protegidas)
  */
 app.post('/add', ensureAuthenticated, async (req, res) => {
   const { nome, quantidade, categoria } = req.body;
   const userId = req.user.id;
 
   if (!nome || !quantidade || !categoria || !isCategoriaValida(categoria)) {
-      console.log("Falha na validação do item:", req.body);
       return res.redirect('/'); 
   }
 
@@ -362,16 +333,9 @@ app.post('/add', ensureAuthenticated, async (req, res) => {
     res.redirect('/');
   } catch (err) {
     console.error(err.message);
-    return res.status(500).send("Erro ao adicionar item.");
+    res.status(500).send("Erro ao adicionar item.");
   }
 });
-
-/**
- * ROTAS UPDATE, TOGGLE, DELETE (iguais)
- */
-// (Cole aqui suas rotas POST /update, POST /toggle, POST /delete)
-// ...
-// (São exatamente iguais ao arquivo anterior, não mudam nada)
 
 app.post('/update/:id', ensureAuthenticated, async (req, res) => {
   const id = req.params.id;
@@ -429,7 +393,7 @@ app.post('/delete/:id', ensureAuthenticated, async (req, res) => {
 
 // ------------------------------------------------------------------
 
-// 5. INICIAR O SERVIDOR (igual)
+// 5. INICIAR O SERVIDOR
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
 });
