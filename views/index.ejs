@@ -18,15 +18,13 @@
     <% } %>
 
     <div class="header-icon">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-        <path d="M5.757 1.071a.5.5 0 0 1 .172.686L3.383 6h9.234L10.07 1.757a.5.5 0 1 1 .858-.514L13.783 6H15.5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-.623l-1.844 6.456a.75.75 0 0 1-.722.544H3.69a.75.75 0 0 1-.722-.544L1.123 8H.5a.5.5 0 0 1-.5-.5v-1A.5.5 0 0 1 .5 6h1.717L5.07 1.243a.5.5 0 0 1 .686-.172zM2.163 8l1.714 6H12.12l1.714-6H2.163z"/>
-      </svg>
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-shopping-cart"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
     </div>
 
     <h1>Minha Lista</h1>
-    <p>Organize suas compras de forma simples</p>
+    <p>Organize suas compras de forma simples e eficiente</p>
 
-    <section class="form-container">
+    <section class="form-card">
       <form action="/add" method="POST" class="form-add-item">
         <div class="form-group form-group-nome">
           <input type="text" id="nome" name="nome" placeholder="Digite o nome do item..." required>
@@ -35,8 +33,12 @@
         <div class="form-group form-group-categoria">
           <select id="categoria" name="categoria" required>
             <option value="" disabled selected>Escolha a categoria</option>
-            <% listaDeCategorias.forEach(cat => { %>
-              <option value="<%= cat %>"><%= cat %></option>
+            <% Object.keys(listaDeCategorias).forEach(grupo => { %>
+              <optgroup label="<%= grupo %>">
+                <% listaDeCategorias[grupo].forEach(subcategoria => { %>
+                  <option value="<%= subcategoria %>"><%= subcategoria %></option>
+                <% }); %>
+              </optgroup>
             <% }); %>
           </select>
         </div>
@@ -51,11 +53,20 @@
 
       <div class="column">
         <div class="stat-card">
-          <span class="stat-number"><%= countPendentes %></span>
-          <span class="stat-label">Itens pendentes</span>
+          <div class="stat-info">
+            <span class="stat-label">Itens Pendentes</span>
+            <span class="stat-number"><%= countPendentes %></span>
+          </div>
+          <div class="stat-icon-wrapper icon-pendente">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-box"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          </div>
         </div>
 
         <section class="list-container">
+          <h2 class="list-title-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-shopping-cart"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+            Para Comprar
+          </h2>
           <% if (itensPendentes.length === 0) { %>
             <p class="empty-list">Nenhum item pendente. Adicione acima!</p>
           <% } else { %>
@@ -99,12 +110,20 @@
 
       <div class="column">
         <div class="stat-card">
-          <span class="stat-number"><%= countComprados %></span>
-          <span class="stat-label">Itens comprados</span>
+          <div class="stat-info">
+            <span class="stat-label">Itens Comprados</span>
+            <span class="stat-number"><%= countComprados %></span>
+          </div>
+          <div class="stat-icon-wrapper icon-comprado">
+             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check-square"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+          </div>
         </div>
 
         <section class="list-container">
-          <h2>COMPRADOS</h2>
+          <h2 class="list-title-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check-square"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+            Comprados
+          </h2>
           <% if (itensComprados.length === 0) { %>
             <p class="empty-list">Nenhum item comprado ainda.</p>
           <% } else { %>

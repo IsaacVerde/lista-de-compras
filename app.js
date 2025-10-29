@@ -1,4 +1,4 @@
-// 1. IMPORTAÇÕES E CONFIGURAÇÃO
+// 1. IMPORTAÇÕES E CONFIGURAÇÃO (igual)
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -11,7 +11,7 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
 const app = express();
-app.enable('trust proxy');
+app.enable('trust proxy'); // <- ESSENCIAL PARA O GOOGLE/VERCEL
 const port = 3000;
 
 app.set('view engine', 'ejs');
@@ -19,7 +19,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 // ------------------------------------------------------------------
-//           CONFIGURAÇÃO DE SESSÃO E PASSPORT
+//           CONFIGURAÇÃO DE SESSÃO E PASSPORT (igual)
 // ------------------------------------------------------------------
 
 app.use(session({
@@ -32,7 +32,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // ------------------------------------------------------------------
-//           CONFIGURAÇÃO DO BANCO DE DADOS
+//           CONFIGURAÇÃO DO BANCO DE DADOS (igual)
 // ------------------------------------------------------------------
 
 const db = new Pool({
@@ -44,7 +44,7 @@ const db = new Pool({
 
 console.log('Conectado ao Vercel Postgres.');
 
-// 3. CRIAÇÃO DAS TABELAS (Verifica ao iniciar)
+// 3. CRIAÇÃO DAS TABELAS (igual)
 const criarTabelas = async () => {
   try {
     await db.query(`
@@ -74,10 +74,13 @@ const criarTabelas = async () => {
 criarTabelas();
 
 // ------------------------------------------------------------------
-//           LÓGICA DO PASSPORT (Estratégias)
+//           LÓGICA DO PASSPORT (Estratégias) (igual)
 // ------------------------------------------------------------------
 
-// Estratégia Local (Email/Senha)
+// (Cole aqui toda a sua lógica do passport.use(LocalStrategy), passport.use(GoogleStrategy), serializeUser, deserializeUser)
+// ...
+// (É exatamente igual ao arquivo anterior, não muda nada)
+
 passport.use(new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
   try {
     const result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
@@ -102,7 +105,6 @@ passport.use(new LocalStrategy({ usernameField: 'email' }, async (email, passwor
   }
 }));
 
-// Estratégia do Google
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -114,14 +116,11 @@ passport.use(new GoogleStrategy({
       if (result.rows.length > 0) {
         return done(null, result.rows[0]);
       } else {
-        // Verifica se o email já existe (de um login local)
         const emailResult = await db.query("SELECT * FROM users WHERE email = $1", [profile.emails[0].value]);
         if (emailResult.rows.length > 0) {
-          // Se sim, apenas liga o googleId a essa conta
           const updatedUser = await db.query("UPDATE users SET googleId = $1 WHERE email = $2 RETURNING *", [profile.id, profile.emails[0].value]);
           return done(null, updatedUser.rows[0]);
         } else {
-          // Senão, cria um usuário novo
           const newUserResult = await db.query(
             "INSERT INTO users (email, googleId) VALUES ($1, $2) RETURNING *",
             [profile.emails[0].value, profile.id]
@@ -135,12 +134,10 @@ passport.use(new GoogleStrategy({
   }
 ));
 
-// Salva o ID do usuário na sessão
 passport.serializeUser((user, done) => {
   done(null, user.id);
 });
 
-// Recupera os dados do usuário a partir do ID na sessão
 passport.deserializeUser(async (id, done) => {
   try {
     const result = await db.query("SELECT * FROM users WHERE id = $1", [id]);
@@ -150,26 +147,28 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
+
 // ------------------------------------------------------------------
-//           ROTAS DE AUTENTICAÇÃO
+//           ROTAS DE AUTENTICAÇÃO (igual)
 // ------------------------------------------------------------------
+
+// (Cole aqui todas as suas rotas GET /login, POST /login, GET /register, POST /register, GET /logout, GET /auth/google, GET /auth/google/callback)
+// ...
+// (É exatamente igual ao arquivo anterior, não muda nada)
 
 app.get('/login', (req, res) => {
   res.render('login.ejs');
 });
-
 app.get('/register', (req, res) => {
   res.render('register.ejs');
 });
-
 app.post('/register', async (req, res) => {
   const { email, password } = req.body;
   try {
     const checkResult = await db.query("SELECT * FROM users WHERE email = $1", [email]);
     if (checkResult.rows.length > 0) {
-      return res.redirect('/register'); // Idealmente, com uma mensagem de erro
+      return res.redirect('/register');
     }
-    
     bcrypt.hash(password, saltRounds, async (err, hash) => {
       if (err) throw err;
       const result = await db.query(
@@ -187,24 +186,19 @@ app.post('/register', async (req, res) => {
     res.redirect('/register');
   }
 });
-
 app.post('/login', passport.authenticate('local', {
   successRedirect: '/',
   failureRedirect: '/login'
 }));
-
 app.get('/logout', (req, res, next) => {
   req.logout((err) => {
     if (err) { return next(err); }
     res.redirect('/login');
   });
 });
-
-// Rotas do Google
 app.get('/auth/google',
   passport.authenticate('google', { scope: ['profile', 'email'] })
 );
-
 app.get('/auth/google/callback', 
   passport.authenticate('google', {
     successRedirect: '/',
@@ -212,35 +206,102 @@ app.get('/auth/google/callback',
   })
 );
 
+
 // ------------------------------------------------------------------
-//           ROTAS DO APP (PROTEGIDAS E REATORADAS)
+//           ROTAS DO APP (COM NOVAS CATEGORIAS)
 // ------------------------------------------------------------------
 
-// (Helpers de Categorias)
-const categoriasValidas = [
-  "Frutas", "Verduras e Legumes", "Laticínios", "Carnes e Aves",
-  "Peixes e Frutos do Mar", "Padaria", "Congelados", "Mercearia (Secos)",
-  "Bebidas", "Limpeza", "Higiene Pessoal", "Outros"
-];
+// (NOVO) Objeto de Categorias e Subcategorias
+const categorias = {
+  "Hortifruti": ["Frutas", "Verduras", "Legumes"],
+  "Carnes e Peixes": ["Carne Bovina", "Aves", "Carne Suína", "Peixes", "Frutos do Mar"],
+  "Laticínios e Frios": ["Leite", "Queijos", "Iogurtes", "Manteiga", "Presunto", "Ovos"],
+  "Padaria": ["Pães", "Bolos", "Biscoitos"],
+  "Mercearia": ["Arroz", "Feijão", "Massas", "Óleos", "Temperos", "Molhos", "Enlatados"],
+  "Congelados": ["Pratos Prontos", "Salgados", "Polpas de Fruta", "Sorvetes"],
+  "Bebidas": ["Água", "Sucos", "Refrigerantes", "Cervejas", "Vinhos"],
+  "Limpeza": ["Sabão em Pó", "Detergente", "Desinfetante", "Água Sanitária"],
+  "Higiene Pessoal": ["Shampoo", "Condicionador", "Sabonete", "Papel Higiênico"],
+  "Utilitários": ["Papel Toalha", "Filtro de Café", "Sacos de Lixo"],
+  "Outros": ["Outros"]
+};
+
+// (NOVO) Mapeamento de cores (a CHAVE é a subcategoria exata)
+const categoriasCores = {
+  // Hortifruti
+  "Frutas": "cat-frutas",
+  "Verduras": "cat-verduras",
+  "Legumes": "cat-verduras",
+  // Carnes
+  "Carne Bovina": "cat-carnes",
+  "Aves": "cat-carnes",
+  "Carne Suína": "cat-carnes",
+  "Peixes": "cat-peixes",
+  "Frutos do Mar": "cat-peixes",
+  // Laticínios
+  "Leite": "cat-laticinios",
+  "Queijos": "cat-laticinios",
+  "Iogurtes": "cat-laticinios",
+  "Manteiga": "cat-laticinios",
+  "Presunto": "cat-laticinios",
+  "Ovos": "cat-laticinios",
+  // Padaria
+  "Pães": "cat-padaria",
+  "Bolos": "cat-padaria",
+  "Biscoitos": "cat-padaria",
+  // Mercearia
+  "Arroz": "cat-mercearia",
+  "Feijão": "cat-mercearia",
+  "Massas": "cat-mercearia",
+  "Óleos": "cat-mercearia",
+  "Temperos": "cat-mercearia",
+  "Molhos": "cat-mercearia",
+  "Enlatados": "cat-mercearia",
+  // Congelados
+  "Pratos Prontos": "cat-congelados",
+  "Salgados": "cat-congelados",
+  "Polpas de Fruta": "cat-congelados",
+  "Sorvetes": "cat-congelados",
+  // Bebidas
+  "Água": "cat-bebidas",
+  "Sucos": "cat-bebidas",
+  "Refrigerantes": "cat-bebidas",
+  "Cervejas": "cat-bebidas",
+  "Vinhos": "cat-bebidas",
+  // Limpeza
+  "Sabão em Pó": "cat-limpeza",
+  "Detergente": "cat-limpeza",
+  "Desinfetante": "cat-limpeza",
+  "Água Sanitária": "cat-limpeza",
+  // Higiene
+  "Shampoo": "cat-higiene",
+  "Condicionador": "cat-higiene",
+  "Sabonete": "cat-higiene",
+  "Papel Higiênico": "cat-higiene",
+  // Utilitários
+  "Papel Toalha": "cat-utilitarios",
+  "Filtro de Café": "cat-utilitarios",
+  "Sacos de Lixo": "cat-utilitarios",
+  // Outros
+  "Outros": "cat-outros"
+};
+
+// (NOVO) Função de helper atualizada
 function getCategoryClass(categoria) {
-  // (Esta função é a mesma que você já tinha)
-   switch(categoria) {
-    case 'Frutas': return 'cat-frutas';
-    case 'Verduras e Legumes': return 'cat-verduras';
-    case 'Laticínios': return 'cat-laticinios';
-    case 'Carnes e Aves': return 'cat-carnes';
-    case 'Peixes e Frutos do Mar': return 'cat-peixes';
-    case 'Padaria': return 'cat-padaria';
-    case 'Congelados': return 'cat-congelados';
-    case 'Mercearia (Secos)': return 'cat-mercearia';
-    case 'Bebidas': return 'cat-bebidas';
-    case 'Limpeza': return 'cat-limpeza';
-    case 'Higiene Pessoal': return 'cat-higiene';
-    default: return 'cat-outros';
-  }
+  return categoriasCores[categoria] || 'cat-outros';
 }
 
-// Middleware de proteção
+// (NOVO) Helper para validar a categoria
+function isCategoriaValida(categoriaRecebida) {
+  for (const grupo in categorias) {
+    if (categorias[grupo].includes(categoriaRecebida)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Middleware de proteção (igual)
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
@@ -250,7 +311,7 @@ function ensureAuthenticated(req, res, next) {
 
 /**
  * ROTA READ (GET /)
- * (Refatorado para Autenticação)
+ * (Atualizada para enviar o novo objeto de categorias)
  */
 app.get('/', ensureAuthenticated, async (req, res) => {
   const userId = req.user.id;
@@ -272,7 +333,7 @@ app.get('/', ensureAuthenticated, async (req, res) => {
       itensComprados: comprados,
       countPendentes: pendentes.length,
       countComprados: comprados.length,
-      listaDeCategorias: categoriasValidas
+      listaDeCategorias: categorias // (MUDANÇA) Enviando o novo objeto
     });
 
   } catch (err) {
@@ -283,17 +344,17 @@ app.get('/', ensureAuthenticated, async (req, res) => {
 
 /**
  * ROTA CREATE (POST /add)
- * (Refatorado para Autenticação)
+ * (Atualizada para validar a nova categoria)
  */
 app.post('/add', ensureAuthenticated, async (req, res) => {
   const { nome, quantidade, categoria } = req.body;
-  const userId = req.user.id; // Pega o ID do usuário logado
+  const userId = req.user.id;
 
-  if (!nome || !quantidade || !categoria || !categoriasValidas.includes(categoria)) {
+  if (!nome || !quantidade || !categoria || !isCategoriaValida(categoria)) {
+      console.log("Falha na validação do item:", req.body);
       return res.redirect('/'); 
   }
 
-  // Adiciona user_id à query
   const sql = "INSERT INTO itens (nome, quantidade, categoria, user_id) VALUES ($1, $2, $3, $4)";
   
   try {
@@ -306,9 +367,12 @@ app.post('/add', ensureAuthenticated, async (req, res) => {
 });
 
 /**
- * ROTA UPDATE (POST /update/:id)
- * (Refatorado para Autenticação)
+ * ROTAS UPDATE, TOGGLE, DELETE (iguais)
  */
+// (Cole aqui suas rotas POST /update, POST /toggle, POST /delete)
+// ...
+// (São exatamente iguais ao arquivo anterior, não mudam nada)
+
 app.post('/update/:id', ensureAuthenticated, async (req, res) => {
   const id = req.params.id;
   const action = req.query.action;
@@ -316,7 +380,6 @@ app.post('/update/:id', ensureAuthenticated, async (req, res) => {
 
   let sql;
   
-  // Adiciona AND user_id = $2 para segurança
   if (action === 'increase') {
     sql = "UPDATE itens SET quantidade = quantidade + 1 WHERE id = $1 AND user_id = $2";
   } else if (action === 'decrease') {
@@ -334,15 +397,10 @@ app.post('/update/:id', ensureAuthenticated, async (req, res) => {
   }
 });
 
-/**
- * ROTA TOGGLE (POST /toggle/:id)
- * (Refatorado para Autenticação)
- */
 app.post('/toggle/:id', ensureAuthenticated, async (req, res) => {
   const id = req.params.id;
   const userId = req.user.id;
   
-  // Adiciona AND user_id = $2 para segurança
   const sql = "UPDATE itens SET comprado = CASE WHEN comprado = 0 THEN 1 ELSE 0 END WHERE id = $1 AND user_id = $2";
 
   try {
@@ -354,15 +412,10 @@ app.post('/toggle/:id', ensureAuthenticated, async (req, res) => {
   }
 });
 
-/**
- * ROTA DELETE (POST /delete/:id)
- * (Refatorado para Autenticação)
- */
 app.post('/delete/:id', ensureAuthenticated, async (req, res) => {
   const id = req.params.id;
   const userId = req.user.id;
   
-  // Adiciona AND user_id = $2 para segurança
   const sql = "DELETE FROM itens WHERE id = $1 AND user_id = $2";
 
   try {
@@ -376,7 +429,7 @@ app.post('/delete/:id', ensureAuthenticated, async (req, res) => {
 
 // ------------------------------------------------------------------
 
-// 5. INICIAR O SERVIDOR
+// 5. INICIAR O SERVIDOR (igual)
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
 });
