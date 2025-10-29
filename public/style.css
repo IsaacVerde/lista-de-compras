@@ -279,3 +279,46 @@ h2 {
     align-items: stretch;
   }
 }
+
+.user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-body);
+  font-size: 0.9em;
+  color: var(--text-light);
+  padding-bottom: 15px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border); /* Uma linha fina para separar */
+}
+
+.user-email strong {
+  color: var(--text-dark);
+  font-weight: 600;
+}
+
+.btn-logout {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.85em;
+  text-decoration: none;
+  background-color: var(--danger);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-logout:hover {
+  background-color: #c0392b; /* Tom mais escuro de vermelho */
+}
+
+/* RESPONSIVIDADE (Ajuste para telas pequenas) */
+@media (max-width: 768px) {
+  /* ... (o seu @media query existente) ... */
+
+  .user-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
