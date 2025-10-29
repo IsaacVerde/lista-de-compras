@@ -11,6 +11,7 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
 const app = express();
+app.enable('trust proxy');
 const port = 3000;
 
 app.set('view engine', 'ejs');
