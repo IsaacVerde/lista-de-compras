@@ -347,7 +347,12 @@ app.post('/update/:id', ensureAuthenticated, async (req, res) => {
   if (action === 'increase') {
     sql = "UPDATE itens SET quantidade = quantidade + 1 WHERE id = $1 AND user_id = $2";
   } else if (action === 'decrease') {
-    sql = "UPDATE itens SET quantidade = MAX(1, quantidade - 1) WHERE id = $1 AND user_id = $2";
+    
+    // --- A CORREÇÃO ESTÁ AQUI ---
+    // Trocámos MAX(1, ...) por GREATEST(1, ...)
+    sql = "UPDATE itens SET quantidade = GREATEST(1, quantidade - 1) WHERE id = $1 AND user_id = $2";
+    // ----------------------------
+
   } else {
     return res.redirect('/');
   }
